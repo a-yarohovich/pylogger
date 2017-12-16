@@ -47,7 +47,7 @@ class Logger:
         filename = filepath.split('/')[-1]
         line_number = stack[filepath_stack_level][1]
         funcname = stack[filepath_stack_level][2]
-        msg = filename + ":" + str(line_number) + " " + msg + " " + filepath + " in `" + funcname + "`"
+        msg = filename + " " + msg + " " + filepath + "(+" + str(line_number) + ")" + " in `" + funcname + "`"
         return msg
 
     def debug(self, msg, filepath_print_stack_level=-3, *args, **kwargs) -> None:

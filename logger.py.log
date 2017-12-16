@@ -1,9 +1,0 @@
-DEBUG 140596622501632 2017-12-13 22:26:26,460 views.py:58 user_id /home/andrew/dev/flask/my-capp/my-capp/app/main/views.py in `new_profile`
-DEBUG 140118032226048 2017-12-16 18:47:56,541 logger.py:83 hello world! /home/andrew/dev/flask/core-app/logger/logger.py in `test2`
-DEBUG 139844737345280 2017-12-16 18:48:23,253 logger.py:83 hello world! /home/andrew/dev/flask/core-app/logger/logger.py in `test2`
-DEBUG 140677963806464 2017-12-16 18:48:29,660 logger.py:83 hello world! /home/andrew/dev/flask/core-app/logger/logger.py in `test2`
-DEBUG 140467930023680 2017-12-16 18:50:22,395 logger.py:45 hello world! /home/andrew/dev/flask/core-app/logger/logger.py in `__formatting_msg`
-DEBUG 140281197750016 2017-12-16 18:50:29,034 logger.py:80 hello world! /home/andrew/dev/flask/core-app/logger/logger.py in `test1`
-DEBUG 139858546743040 2017-12-16 18:50:40,905 logger.py:77 hello world! /home/andrew/dev/flask/core-app/logger/logger.py in `test0`
-DEBUG 139998901507840 2017-12-16 18:50:48,270 logger.py:85 hello world! /home/andrew/dev/flask/core-app/logger/logger.py in `<module>`
-DEBUG 140094403299072 2017-12-16 18:50:55,146 _pydev_execfile.py:18 hello world! /home/andrew/pycharm/pycharm-community-2017.2.2/helpers/pydev/_pydev_imps/_pydev_execfile.py in `execfile`
