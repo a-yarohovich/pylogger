@@ -50,6 +50,10 @@ class Logger:
         msg = filename + " " + msg + " " + filepath + "(+" + str(line_number) + ")" + " in `" + funcname + "`"
         return msg
 
+    @staticmethod
+    def current_func_name():
+        return traceback.extract_stack(None, 2)[0][2]
+
     def debug(self, msg, filepath_print_stack_level=-3, *args, **kwargs) -> None:
         """
         :param msg: message for print in log
@@ -65,10 +69,20 @@ class Logger:
         self.log.log(logging.WARNING, self.__formatting_msg(msg, filepath_print_stack_level), *args, **kwargs)
 
     def error(self, msg, filepath_print_stack_level=-3, *args, **kwargs) -> None:
-        self.log.log(logging.ERROR, self.__formatting_msg(msg, filepath_print_stack_level) + "\n" + traceback.format_exc(), *args, **kwargs)
+        self.log.log(
+            logging.ERROR,
+            self.__formatting_msg(msg, filepath_print_stack_level) + "\n" + traceback.format_exc(),
+            *args,
+            **kwargs
+        )
 
     def critical(self, msg, filepath_print_stack_level=-3, *args, **kwargs) -> None:
-        self.log.log(logging.CRITICAL, self.__formatting_msg(msg, filepath_print_stack_level) + "\n" + traceback.format_exc(), *args, **kwargs)
+        self.log.log(
+            logging.CRITICAL,
+            self.__formatting_msg(msg, filepath_print_stack_level) + "\n" + traceback.format_exc(),
+            *args,
+            **kwargs
+        )
 
 
 # ---------------------------------------------------------------------
