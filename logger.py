@@ -51,7 +51,7 @@ class Logger:
         return msg
 
     @staticmethod
-    def current_func_name():
+    def func_name():
         return traceback.extract_stack(None, 2)[0][2]
 
     def debug(self, msg, filepath_print_stack_level=-3, *args, **kwargs) -> None:
