@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from logging.handlers import RotatingFileHandler
 from configparser import ConfigParser
 import traceback
@@ -60,6 +61,9 @@ class Logger:
         :param filepath_print_stack_level: param which define a level of stack for printing filename, line and funkname
         level must be negative, for example : -2, -5. Default value is -3
         """
+        content_type = kwargs.pop("content_type", None)
+        if content_type == "json":
+            msg = json.dumps(msg, sort_keys=False, indent=2)
         self.log.log(logging.DEBUG, self.__formatting_msg(msg, filepath_print_stack_level), *args, **kwargs)
 
     def info(self, msg, filepath_print_stack_level=-3, *args, **kwargs) -> None:
