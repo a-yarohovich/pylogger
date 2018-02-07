@@ -9,19 +9,62 @@ import traceback
 class Logger:
     __instance = None
 
+    def __init__(self, config_file_name):
+        config = ConfigParser()
+        config.read(config_file_name)
+        self.log, self.log_file_handler = Logger._init_logger(config)
+
     @staticmethod
     def instance():
         if not Logger.__instance:
             Logger.__instance = Logger(os.path.dirname(os.path.realpath(__file__)) + '/logger.cfg')
         return Logger.__instance
 
-    def __init__(self, config_file_name):
-        config = ConfigParser()
-        config.read(config_file_name)
-        self.log, self.log_file_handler = Logger.init_logger(config)
+    @staticmethod
+    def funcname():
+        return traceback.extract_stack(None, 2)[0][2]
 
     @staticmethod
-    def init_logger(config):
+    def exmsg(exception) -> str:
+        msg = str(exception)
+        class_type = str(type(exception))
+        return (class_type + " :: " + msg) if msg else class_type
+
+    def debug(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
+        """
+        :param msg: message for print in log
+        :param filepath_print_stack_level: param which define a level of stack for printing filename, line and funkname
+        level must be negative, for example : -2, -5. Default value is -3
+        """
+        content_type = kwargs.pop("content_type", None)
+        if content_type == "json":
+            msg = json.dumps(msg, sort_keys=False, indent=2)
+        self.log.log(logging.DEBUG, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
+
+    def info(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
+        self.log.log(logging.INFO, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
+
+    def warning(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
+        self.log.log(logging.WARNING, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
+
+    def error(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
+        self.log.log(
+            logging.ERROR,
+            self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
+            *args,
+            **kwargs
+        )
+
+    def critical(self, msg, filepath_print_stack_level=-3, max_symbols = 0,  *args, **kwargs) -> None:
+        self.log.log(
+            logging.CRITICAL,
+            self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
+            *args,
+            **kwargs
+        )
+
+    @staticmethod
+    def _init_logger(config):
         # create logger
         log_formatter = logging.Formatter('%(levelname)s %(thread)d %(asctime)s %(message)s')
         log = logging.getLogger('my-capp')
@@ -41,54 +84,20 @@ class Logger:
         return log, log_file_handler
 
     @staticmethod
-    def __formatting_msg(msg, filepath_stack_level, max_symbols):
+    def _formatting_msg(msg, filepath_stack_level, max_symbols):
         # Get path and filename without full path
-        stack = traceback.extract_stack()
-        filepath = stack[filepath_stack_level][0]
-        filename = filepath.split('/')[-1]
-        line_number = stack[filepath_stack_level][1]
-        funcname = stack[filepath_stack_level][2]
-        if max_symbols:
-            msg = msg[:max_symbols]
-        msg = filename + " " + msg + " " + filepath + "(+" + str(line_number) + ")" + " in `" + funcname + "`"
+        try:
+            stack = traceback.extract_stack()
+            filepath = stack[filepath_stack_level][0]
+            filename = filepath.split('/')[-1]
+            line_number = stack[filepath_stack_level][1]
+            funcname = stack[filepath_stack_level][2]
+            if max_symbols:
+                msg = msg[:max_symbols]
+            msg = msg + " " + "(from " + filepath + " in `" + funcname + "`" + " +" + str(line_number) + ")"
+        except:
+            pass
         return msg
-
-    @staticmethod
-    def func_name():
-        return traceback.extract_stack(None, 2)[0][2]
-
-    def debug(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
-        """
-        :param msg: message for print in log
-        :param filepath_print_stack_level: param which define a level of stack for printing filename, line and funkname
-        level must be negative, for example : -2, -5. Default value is -3
-        """
-        content_type = kwargs.pop("content_type", None)
-        if content_type == "json":
-            msg = json.dumps(msg, sort_keys=False, indent=2)
-        self.log.log(logging.DEBUG, self.__formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
-
-    def info(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
-        self.log.log(logging.INFO, self.__formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
-
-    def warning(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
-        self.log.log(logging.WARNING, self.__formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
-
-    def error(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
-        self.log.log(
-            logging.ERROR,
-            self.__formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
-            *args,
-            **kwargs
-        )
-
-    def critical(self, msg, filepath_print_stack_level=-3, max_symbols = 0,  *args, **kwargs) -> None:
-        self.log.log(
-            logging.CRITICAL,
-            self.__formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
-            *args,
-            **kwargs
-        )
 
 
 # ---------------------------------------------------------------------
@@ -107,4 +116,11 @@ if __name__ == '__main__':
     def test2(msg):
         LOG.debug(msg, max_symbols=6)
 
-    test0("hello world!")
+
+    ex = None
+    try:
+        raise ValueError("Test")
+    except Exception as ex:
+        LOG.warning(LOG.exmsg(ex))
+
+    #test0("hello world!")
