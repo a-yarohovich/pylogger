@@ -6,6 +6,7 @@ from configparser import ConfigParser
 import traceback
 
 
+# noinspection PyBroadException
 class Logger:
     __instance = None
 
@@ -30,8 +31,9 @@ class Logger:
         class_type = str(type(exception))
         return (class_type + " :: " + msg) if msg else class_type
 
-    def debug(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
+    def debug(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
         """
+        :param max_symbols: max symbols to print
         :param msg: message for print in log
         :param filepath_print_stack_level: param which define a level of stack for printing filename, line and funkname
         level must be negative, for example : -2, -5. Default value is -3
@@ -41,13 +43,14 @@ class Logger:
             msg = json.dumps(msg, sort_keys=False, indent=2)
         self.log.log(logging.DEBUG, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
 
-    def info(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
+    def info(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
         self.log.log(logging.INFO, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
 
-    def warning(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
-        self.log.log(logging.WARNING, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
+    def warning(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
+        self.log.log(logging.WARNING, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args,
+                     **kwargs)
 
-    def error(self, msg, filepath_print_stack_level=-3, max_symbols = 0, *args, **kwargs) -> None:
+    def error(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
         self.log.log(
             logging.ERROR,
             self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
@@ -55,7 +58,7 @@ class Logger:
             **kwargs
         )
 
-    def critical(self, msg, filepath_print_stack_level=-3, max_symbols = 0,  *args, **kwargs) -> None:
+    def critical(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
         self.log.log(
             logging.CRITICAL,
             self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
@@ -105,13 +108,14 @@ class Logger:
 # Use this global object for accessing to logger
 LOG = Logger.instance()
 
-
 if __name__ == '__main__':
     def test0(msg):
         test1(msg)
 
+
     def test1(msg):
         test2(msg)
+
 
     def test2(msg):
         LOG.debug(msg, max_symbols=6)
@@ -123,4 +127,4 @@ if __name__ == '__main__':
     except Exception as ex:
         LOG.warning(LOG.exmsg(ex))
 
-    #test0("hello world!")
+        # test0("hello world!")
