@@ -31,6 +31,13 @@ class Logger:
         class_type = str(type(exception))
         return (class_type + " :: " + msg) if msg else class_type
 
+    @staticmethod
+    def tojson(obj, sort_keys=False, indent=2) -> str:
+        if type(obj) is str:
+            return json.dumps(json.loads(obj), sort_keys=sort_keys, indent=indent)
+        else:
+            return json.dumps(obj, sort_keys=sort_keys, indent=indent)
+
     def debug(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
         """
         :param max_symbols: max symbols to print
@@ -38,9 +45,6 @@ class Logger:
         :param filepath_print_stack_level: param which define a level of stack for printing filename, line and funkname
         level must be negative, for example : -2, -5. Default value is -3
         """
-        content_type = kwargs.pop("content_type", None)
-        if content_type == "json":
-            msg = json.dumps(msg, sort_keys=False, indent=2)
         self.log.log(logging.DEBUG, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
 
     def info(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
@@ -121,10 +125,14 @@ if __name__ == '__main__':
         LOG.debug(msg, max_symbols=6)
 
 
-    ex = None
-    try:
-        raise ValueError("Test")
-    except Exception as ex:
-        LOG.warning(LOG.exmsg(ex))
+    def pp_json(json_thing, sort=False, indents=2):
+        if type(json_thing) is str:
+            return json.dumps(json.loads(json_thing), sort_keys=sort, indent=indents)
+        else:
+            return json.dumps(json_thing, sort_keys=sort, indent=indents)
+
+    your_json = '["foo", {"bar":["baz", null, 1.0, 2]}]'
+    parsed = json.loads(your_json)
+    LOG.debug(pp_json(parsed))
 
         # test0("hello world!")
