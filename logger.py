@@ -71,15 +71,15 @@ class Logger:
         log.setLevel(logging.INFO)
         # Set up file handler for logger
         log_file_handler = RotatingFileHandler(filename=__file__ + ".log",
-                                               maxBytes=config.getint("Logger", "max_bytes"),
-                                               backupCount=config.getint("Logger", "backup_count"))
+                                               maxBytes=config.getint("Logger", "max_bytes", fallback=100000000),
+                                               backupCount=config.getint("Logger", "backup_count", fallback=5))
         log_file_handler.setFormatter(log_formatter)
         log.addHandler(log_file_handler)
         # Set up console handler for logger
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(log_formatter)
         log.addHandler(console_handler)
-        if config.getboolean("Logger", "verbose"):
+        if config.getboolean("Logger", "verbose", fallback=True):
             log.setLevel(logging.DEBUG)
         return log, log_file_handler
 
