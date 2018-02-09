@@ -22,21 +22,30 @@ class Logger:
         return Logger.__instance
 
     @staticmethod
-    def funcname():
+    def funcname() -> str:
         return traceback.extract_stack(None, 2)[0][2]
 
     @staticmethod
     def exmsg(exception) -> str:
+        """
+        :param exception: exception which need to convert to str
+        :return: message from exception
+        :exception: safe
+        """
         msg = str(exception)
         class_type = str(type(exception))
         return (class_type + " :: " + msg) if msg else class_type
 
     @staticmethod
     def tojson(obj, sort_keys=False, indent=2) -> str:
-        if type(obj) is str:
-            return json.dumps(json.loads(obj), sort_keys=sort_keys, indent=indent)
-        else:
-            return json.dumps(obj, sort_keys=sort_keys, indent=indent)
+        try:
+            if type(obj) is str:
+                return json.dumps(json.loads(obj), sort_keys=sort_keys, indent=indent)
+            else:
+                return json.dumps(obj, sort_keys=sort_keys, indent=indent)
+        except Exception as ex:
+            print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
+            return obj
 
     def debug(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
         """
@@ -44,31 +53,97 @@ class Logger:
         :param msg: message for print in log
         :param filepath_print_stack_level: param which define a level of stack for printing filename, line and funkname
         level must be negative, for example : -2, -5. Default value is -3
+        :exception: safe
         """
-        self.log.log(logging.DEBUG, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
+        try:
+            self.log.log(
+                logging.DEBUG,
+                self._formatting_msg(msg, filepath_print_stack_level, max_symbols),
+                *args,
+                **kwargs
+            )
+        except Exception as ex:
+            print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
 
     def info(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
-        self.log.log(logging.INFO, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args, **kwargs)
+        """
+        :param msg:
+        :param filepath_print_stack_level:
+        :param max_symbols:
+        :param args:
+        :param kwargs:
+        :return:
+        :exception: safe
+        """
+        try:
+            self.log.log(
+                logging.INFO,
+                self._formatting_msg(msg, filepath_print_stack_level, max_symbols),
+                *args,
+                **kwargs
+            )
+        except Exception as ex:
+            print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
 
     def warning(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
-        self.log.log(logging.WARNING, self._formatting_msg(msg, filepath_print_stack_level, max_symbols), *args,
-                     **kwargs)
+        """
+        :param msg:
+        :param filepath_print_stack_level:
+        :param max_symbols:
+        :param args:
+        :param kwargs:
+        :return:
+        :exception: safe
+        """
+        try:
+            self.log.log(
+                logging.WARNING,
+                self._formatting_msg(msg, filepath_print_stack_level, max_symbols),
+                *args,
+                **kwargs
+            )
+        except Exception as ex:
+            print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
 
     def error(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
-        self.log.log(
-            logging.ERROR,
-            self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
-            *args,
-            **kwargs
-        )
+        """
+        :param msg:
+        :param filepath_print_stack_level:
+        :param max_symbols:
+        :param args:
+        :param kwargs:
+        :return:
+        :exception: safe
+        """
+        try:
+            self.log.log(
+                logging.ERROR,
+                self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
+                *args,
+                **kwargs
+            )
+        except Exception as ex:
+            print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
 
     def critical(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
-        self.log.log(
-            logging.CRITICAL,
-            self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
-            *args,
-            **kwargs
-        )
+        """
+        :param msg:
+        :param filepath_print_stack_level:
+        :param max_symbols:
+        :param args:
+        :param kwargs:
+        :return:
+        :exception: safe
+        """
+        try:
+            self.log.log(
+                logging.CRITICAL,
+                self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
+                *args,
+                **kwargs
+            )
+        except Exception as ex:
+            print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
 
     @staticmethod
     def _init_logger(config):
@@ -91,7 +166,7 @@ class Logger:
         return log, log_file_handler
 
     @staticmethod
-    def _formatting_msg(msg, filepath_stack_level, max_symbols):
+    def _formatting_msg(msg, filepath_stack_level, max_symbols) -> str:
         # Get path and filename without full path
         try:
             stack = traceback.extract_stack()
@@ -102,37 +177,21 @@ class Logger:
             if max_symbols:
                 msg = msg[:max_symbols]
             msg = msg + " " + "(from " + filepath + " in `" + funcname + "`" + " +" + str(line_number) + ")"
-        except:
-            pass
+        except Exception as ex:
+            print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
         return msg
 
 
-# ---------------------------------------------------------------------
-
 # Use this global object for accessing to logger
 LOG = Logger.instance()
+
 
 if __name__ == '__main__':
     def test0(msg):
         test1(msg)
 
-
     def test1(msg):
         test2(msg)
 
-
     def test2(msg):
         LOG.debug(msg, max_symbols=6)
-
-
-    def pp_json(json_thing, sort=False, indents=2):
-        if type(json_thing) is str:
-            return json.dumps(json.loads(json_thing), sort_keys=sort, indent=indents)
-        else:
-            return json.dumps(json_thing, sort_keys=sort, indent=indents)
-
-    your_json = '["foo", {"bar":["baz", null, 1.0, 2]}]'
-    parsed = json.loads(your_json)
-    LOG.debug(pp_json(parsed))
-
-        # test0("hello world!")
