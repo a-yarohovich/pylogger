@@ -8,18 +8,26 @@ import traceback
 
 # noinspection PyBroadException
 class Logger:
-    __instance = None
+    _instance = None
+    _conf_filename = "logger.cfg"
 
-    def __init__(self, config_file_name):
+    def __init__(self, conf_path):
+        self.log = None
+        self.log_file_handler = None
+        self.reload_config(conf_path)
+
+    def reload_config(self, conf_path):
+        if self.log and self.log.hasHandlers():
+            self.log.handlers.clear()
         config = ConfigParser()
-        config.read(config_file_name)
-        self.log, self.log_file_handler = Logger._init_logger(config)
+        config.read(conf_path + self._conf_filename)
+        self.log, self.log_file_handler = Logger._reinit_logger(config)
 
     @staticmethod
     def instance():
-        if not Logger.__instance:
-            Logger.__instance = Logger(os.path.dirname(os.path.realpath(__file__)) + '/logger.cfg')
-        return Logger.__instance
+        if not Logger._instance:
+            Logger._instance = Logger(os.path.dirname(os.path.realpath(__file__)))
+        return Logger._instance
 
     @staticmethod
     def funcname() -> str:
@@ -146,13 +154,19 @@ class Logger:
             print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
 
     @staticmethod
-    def _init_logger(config):
+    def _reinit_logger(config):
         # create logger
-        log_formatter = logging.Formatter('%(levelname)s %(thread)d %(asctime)s %(message)s')
-        log = logging.getLogger('my-capp')
+        log_formatter = logging.Formatter("%(levelname)s %(asctime)s %(message)s")
+        log = logging.getLogger(config.get("Logger", "name", fallback="default"))
         log.setLevel(logging.INFO)
         # Set up file handler for logger
-        log_file_handler = RotatingFileHandler(filename=__file__ + ".log",
+        filename = __file__ + ".log"
+        path: list = filename.split("/")
+        path.insert(-1, "logs")
+        if path:
+            filename = "/".join(path)
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+        log_file_handler = RotatingFileHandler(filename=filename,
                                                maxBytes=config.getint("Logger", "max_bytes", fallback=100000000),
                                                backupCount=config.getint("Logger", "backup_count", fallback=5))
         log_file_handler.setFormatter(log_formatter)
@@ -163,6 +177,12 @@ class Logger:
         log.addHandler(console_handler)
         if config.getboolean("Logger", "verbose", fallback=True):
             log.setLevel(logging.DEBUG)
+        # Printing config
+        for section in config.sections():
+            log.log(
+                logging.INFO,
+                "{0}:{1}".format(section, dict({item[0]: item[1] for item in config.items(section)}))
+            )
         return log, log_file_handler
 
     @staticmethod
@@ -195,3 +215,7 @@ if __name__ == '__main__':
 
     def test2(msg):
         LOG.debug(msg, max_symbols=6)
+
+    test0("testtt")
+    LOG.reload_config("/home/andrew/dev/my-capp/logger")
+    test0("after")
