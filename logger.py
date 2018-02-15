@@ -17,6 +17,8 @@ class Logger:
         self.reload_config(conf_path)
 
     def reload_config(self, conf_path):
+        if not conf_path:
+            raise ValueError("Try to init logger by empty config path")
         if self.log and self.log.hasHandlers():
             self.log.handlers.clear()
         config = ConfigParser()
@@ -53,7 +55,7 @@ class Logger:
                 return json.dumps(obj, sort_keys=sort_keys, indent=indent)
         except Exception as ex:
             print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
-            return obj
+            return str(obj)
 
     def debug(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
         """
