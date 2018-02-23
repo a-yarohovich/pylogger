@@ -158,7 +158,7 @@ class Logger:
     @staticmethod
     def _reinit_logger(config):
         # create logger
-        log_formatter = logging.Formatter("%(levelname)s %(asctime)s %(message)s")
+        log_formatter = logging.Formatter("%(levelname)s %(asctime)s.%(msecs)03d %(message)s", "%d.%m %H:%M:%S")
         log = logging.getLogger(config.get("Logger", "name", fallback="default"))
         log.setLevel(logging.INFO)
         # Set up file handler for logger
@@ -198,7 +198,7 @@ class Logger:
             funcname = stack[filepath_stack_level][2]
             if max_symbols:
                 msg = msg[:max_symbols]
-            msg = msg + " " + "(from " + filepath + " in `" + funcname + "`" + " +" + str(line_number) + ")"
+            msg = "[" + filename + "] " + msg + " " + "(from " + filepath + " in `" + funcname + "`" + " +" + str(line_number) + ")"
         except Exception as ex:
             print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
         return msg
