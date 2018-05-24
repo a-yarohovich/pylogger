@@ -65,6 +65,8 @@ class Logger:
         level must be negative, for example : -2, -5. Default value is -3
         :exception: safe
         """
+        if self.log.level > logging.DEBUG:
+            return
         try:
             self.log.log(
                 logging.DEBUG,
@@ -85,6 +87,8 @@ class Logger:
         :return:
         :exception: safe
         """
+        if self.log.level > logging.INFO:
+            return
         try:
             self.log.log(
                 logging.INFO,
@@ -105,6 +109,8 @@ class Logger:
         :return:
         :exception: safe
         """
+        if self.log.level > logging.WARNING:
+            return
         try:
             self.log.log(
                 logging.WARNING,
@@ -125,6 +131,8 @@ class Logger:
         :return:
         :exception: safe
         """
+        if self.log.level > logging.ERROR:
+            return
         try:
             self.log.log(
                 logging.ERROR,
