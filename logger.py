@@ -166,9 +166,26 @@ class Logger:
     @staticmethod
     def _reinit_logger(config):
         # create logger
-        log_formatter = logging.Formatter("%(levelname)s %(asctime)s.%(msecs)03d %(message)s", "%d.%m %H:%M:%S")
         log = logging.getLogger(config.get("Logger", "name", fallback="default"))
         log.setLevel(logging.INFO)
+        # do colours if we can
+        try:
+            import colorlog
+            log_colors = {
+                'CRITICAL': 'bold_red',
+                'ERROR': 'red',
+                'WARNING': 'purple',
+                'INFO': 'green',
+                'DEBUG': 'white',
+                'TRACE': 'cyan',
+            }
+            log_formatter = colorlog.ColoredFormatter(
+                "%(log_color)s%(levelname)s %(asctime)s.%(msecs)03d %(message)s",
+                datefmt="%d.%m %H:%M:%S",
+                log_colors=log_colors
+            )
+        except Exception:
+            log_formatter = logging.Formatter("%(levelname)s %(asctime)s.%(msecs)03d %(message)s", "%d.%m %H:%M:%S")
         # Set up file handler for logger
         filename = __file__ + ".log"
         path: list = filename.split("/")
@@ -183,6 +200,7 @@ class Logger:
         log.addHandler(log_file_handler)
         # Set up console handler for logger
         console_handler = logging.StreamHandler()
+
         console_handler.setFormatter(log_formatter)
         log.addHandler(console_handler)
         if config.getboolean("Logger", "verbose", fallback=True):
@@ -224,7 +242,7 @@ if __name__ == '__main__':
         test2(msg)
 
     def test2(msg):
-        LOG.debug(msg, max_symbols=6)
+        LOG.warning(msg, max_symbols=6)
 
     test0("testtt")
     LOG.reload_config("/home/andrew/dev/my-capp/logger")
