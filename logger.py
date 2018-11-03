@@ -4,6 +4,44 @@ import json
 from logging.handlers import RotatingFileHandler
 from configparser import ConfigParser
 import traceback
+import smtplib
+from threading import Thread
+
+
+class Email(object):
+    def __init__(self, host, port, send_from, password, use_ssl):
+        self._host = host
+        self._port = port
+        self._from = send_from
+        self._password = password
+        self._use_ssl = use_ssl
+
+    # TODO go to async code
+    def send(self, subj, text, to):
+        def send():
+            body = "\r\n".join((
+                "From: %s" % self._from,
+                "To: %s" % to,
+                "Subject: %s" % subj,
+                "",
+                text)
+            )
+            if self._use_ssl:
+                server = smtplib.SMTP_SSL(self._host, self._port, timeout=5)
+            else:
+                server = smtplib.SMTP(self._host, self._port, timeout=5)
+            server.set_debuglevel(1)
+            server.login(self._from, self._password)
+            server.sendmail(self._from, to, body)
+            server.quit()
+
+        try:
+            if not self._host or not self._port or not self._from or not self._password:
+                return
+            thr = Thread(target=send)
+            thr.start()
+        except Exception as ex:
+            print("ERROR: {}".format(str(ex)))
 
 
 # noinspection PyBroadException
@@ -11,10 +49,12 @@ class Logger:
     _instance = None
     _conf_filename = "logger.cfg"
 
-    def __init__(self, conf_path):
+    def __init__(self):
         self.log = None
         self.log_file_handler = None
-        self.reload_config(conf_path)
+        self.admin_email = None
+        self.email: Email = None
+        self.enable_alerts = None
 
     def reload_config(self, conf_path):
         if not conf_path:
@@ -24,11 +64,20 @@ class Logger:
         config = ConfigParser()
         config.read(conf_path + self._conf_filename)
         self.log, self.log_file_handler = Logger._reinit_logger(config)
+        self.enable_alerts = bool(config.getboolean('Alerts', 'enable', fallback=True))
+        if self.enable_alerts:
+            self.admin_email = config.get('Alerts', 'admin_email')
+            smtp_host = config.get('Alerts', 'smtp_host')
+            smtp_port = config.get('Alerts', 'smtp_port')
+            use_ssl = bool(config.getboolean('Alerts', 'use_ssl'))
+            send_from = config.get('Alerts', 'send_from')
+            password = config.get('Alerts', 'password')
+            self.email = Email(smtp_host, smtp_port, send_from, password, use_ssl)
 
     @staticmethod
     def instance():
         if not Logger._instance:
-            Logger._instance = Logger(os.path.dirname(os.path.realpath(__file__)))
+            Logger._instance = Logger()
         return Logger._instance
 
     @staticmethod
@@ -133,15 +182,20 @@ class Logger:
         """
         if self.log.level > logging.ERROR:
             return
+        text = None
         try:
+            text = self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc()
             self.log.log(
                 logging.ERROR,
-                self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
+                text,
                 *args,
                 **kwargs
             )
         except Exception as ex:
             print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
+        finally:
+            if self.email:
+                self.email.send("Error has occured in `{}`".format(self.log.name), text, self.admin_email)
 
     def critical(self, msg, filepath_print_stack_level=-3, max_symbols=0, *args, **kwargs) -> None:
         """
@@ -153,15 +207,20 @@ class Logger:
         :return:
         :exception: safe
         """
+        text = None
         try:
+            text = self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc()
             self.log.log(
                 logging.CRITICAL,
-                self._formatting_msg(msg, filepath_print_stack_level, max_symbols) + "\n" + traceback.format_exc(),
+                text,
                 *args,
                 **kwargs
             )
         except Exception as ex:
             print("Logger has faired a exception: {}".format(LOG.exmsg(ex)))
+        finally:
+            if self.email:
+                self.email.send("Crit error has occured in `{}`".format(self.log.name), text, self.admin_email)
 
     @staticmethod
     def _reinit_logger(config):
@@ -193,14 +252,15 @@ class Logger:
         if path:
             filename = "/".join(path)
             os.makedirs(os.path.dirname(filename), exist_ok=True)
-        log_file_handler = RotatingFileHandler(filename=filename,
-                                               maxBytes=config.getint("Logger", "max_bytes", fallback=100000000),
-                                               backupCount=config.getint("Logger", "backup_count", fallback=5))
+        log_file_handler = RotatingFileHandler(
+            filename=filename,
+            maxBytes=config.getint("Logger", "max_bytes", fallback=100000000),
+            backupCount=config.getint("Logger", "backup_count", fallback=5)
+        )
         log_file_handler.setFormatter(log_formatter)
         log.addHandler(log_file_handler)
         # Set up console handler for logger
         console_handler = logging.StreamHandler()
-
         console_handler.setFormatter(log_formatter)
         log.addHandler(console_handler)
         if config.getboolean("Logger", "verbose", fallback=True):
@@ -242,8 +302,7 @@ if __name__ == '__main__':
         test2(msg)
 
     def test2(msg):
-        LOG.warning(msg, max_symbols=6)
+        LOG.error(msg, max_symbols=6)
 
-    test0("testtt")
-    LOG.reload_config("/home/andrew/dev/my-capp/logger")
+    LOG.reload_config('/home/andrew/dev/cfg/')
     test0("after")
